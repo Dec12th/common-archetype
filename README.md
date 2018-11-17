@@ -1,0 +1,2 @@
+# common-archetype
+common-archetype
