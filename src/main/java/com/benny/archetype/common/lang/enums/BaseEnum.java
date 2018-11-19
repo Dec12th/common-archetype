@@ -1,7 +1,5 @@
 package com.benny.archetype.common.lang.enums;
 
-import org.apache.commons.lang.StringUtils;
-
 /**
  * 枚举类基类
  * @author yin.beibei
