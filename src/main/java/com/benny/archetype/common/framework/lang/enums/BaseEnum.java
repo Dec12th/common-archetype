@@ -1,4 +1,4 @@
-package com.benny.archetype.common.lang.enums;
+package com.benny.archetype.common.framework.lang.enums;
 
 /**
  * 枚举类基类

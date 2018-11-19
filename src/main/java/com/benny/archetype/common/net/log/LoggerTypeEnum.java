@@ -1,6 +1,6 @@
 package com.benny.archetype.common.net.log;
 
-import com.benny.archetype.common.lang.enums.BaseEnum;
+import com.benny.archetype.common.framework.lang.enums.BaseEnum;
 import org.apache.commons.lang.StringUtils;
 
 /**
