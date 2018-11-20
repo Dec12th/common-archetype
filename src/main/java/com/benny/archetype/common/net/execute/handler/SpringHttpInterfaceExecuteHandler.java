@@ -1,17 +1,18 @@
 package com.benny.archetype.common.net.execute.handler;
 
-import com.benny.archetype.common.net.domain.BaseRequest;
-import com.benny.archetype.common.net.domain.BaseResult;
-import com.benny.archetype.common.net.domain.InterfaceInfo;
-import com.benny.archetype.common.net.domain.ServicePointInfo;
+import com.alibaba.fastjson.JSON;
+import com.benny.archetype.common.net.domain.*;
+import com.benny.archetype.common.net.exception.HttpExecuteErrorException;
 import com.benny.archetype.common.net.exception.InterfaceInfoInValidException;
+import com.benny.archetype.common.net.exception.NoInstancesException;
 import com.benny.archetype.common.net.log.CommonNetLogger;
 import com.benny.archetype.common.net.log.LoggerTypeEnum;
 import com.benny.archetype.common.net.log.factory.CommonNetLoggerFactory;
 import com.benny.archetype.common.net.log.factory.GenericCommonNetLoggerFactory;
+import com.benny.archetype.common.net.resolver.SpringHttpInterfaceResolver;
+import com.netflix.appinfo.InstanceInfo;
 import com.netflix.discovery.EurekaClient;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
+import okhttp3.*;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -26,10 +27,14 @@ import java.util.*;
  */
 public class SpringHttpInterfaceExecuteHandler implements ExecuteHandler {
 
-   /** 日志工厂 */
+    /**
+     * 日志工厂
+     */
     private static final CommonNetLoggerFactory<Class> LOGGER_FACTORY = new GenericCommonNetLoggerFactory();
 
-    /** 日志记录器 */
+    /**
+     * 日志记录器
+     */
     private final CommonNetLogger logger;
 
     /**
@@ -115,41 +120,99 @@ public class SpringHttpInterfaceExecuteHandler implements ExecuteHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        return null;
+        ServicePointInfo servicePointInfo = methodInterfaceInfoMap.get(method);
+        String invokePoint = getInvokePoint(servicePointInfo);
+
+        BaseRequest request = (BaseRequest) args[0];
+        EnvContext envContext = request.getEnvContext();
+
+        if (envContext == null) {
+            envContext = new EnvContext();
+            request.setEnvContext(envContext);
+        }
+
+        logger.logRequest(invokePoint, request);
+
+        List<InstanceInfo> instanceInfos = eurekaClient.getInstancesByVipAddress(interfaceInfo.getAppName(), false);
+
+        if (CollectionUtils.isEmpty(instanceInfos)) {
+            throw new NoInstancesException(interfaceInfo.getAppName());
+        }
+
+        int targetInstanceIndex = RANDOM.nextInt(instanceInfos.size());
+        InstanceInfo targetInstance = instanceInfos.get(targetInstanceIndex);
+
+        // 計算實際訪問地址
+        StringBuilder serverPoint = new StringBuilder();
+        serverPoint
+                .append(SpringHttpInterfaceResolver.SERVICE_POINT_PREFIX)
+                .append(targetInstance.getHostName())
+                .append(":")
+                .append(targetInstance.getPort());
+
+        StringBuilder vipServerPoint = new StringBuilder();
+        vipServerPoint
+                .append(SpringHttpInterfaceResolver.SERVICE_POINT_PREFIX)
+                .append(interfaceInfo.getAppName());
+
+        String realServerPoint = servicePointInfo.getServiceServerPoint().replace(vipServerPoint.toString(), serverPoint.toString());
+
+        RequestBody requestBody = RequestBody.create(JSON_TYPE, JSON.toJSONString(request));
+        Request httpRequest = new Request.Builder()
+                .addHeader(CONTENT_TYPE_KEY, CONTENT_TYPE)
+                .addHeader(ACCEPT_CHARSET_KEY, ACCEPT_CHARSET.name())
+                .url(realServerPoint)
+                .post(requestBody)
+                .build();
+
+        Response response = okHttpClient.newCall(httpRequest).execute();
+        if (response.code() != RESPONSE_OK_CODE) {
+            logger.warn(response.toString());
+            throw new HttpExecuteErrorException(response);
+        }
+
+
+        BaseResult result = (BaseResult) JSON.parseObject(response.body().string(), servicePointInfo.getResultType());
+
+        EnvContext resultEnvContext = result.getEnvContext();
+        if (resultEnvContext == null) {
+            resultEnvContext = new EnvContext();
+            result.setEnvContext(resultEnvContext);
+        }
+
+        logger.logResult(invokePoint, result);
+
+        return result;
     }
 
     /**
      * 检查接口信息是否合法
+     *
      * @param interfaceInfo 接口信息
      */
-    private void checkInterfaceInfoValid(InterfaceInfo interfaceInfo)
-    {
+    private void checkInterfaceInfoValid(InterfaceInfo interfaceInfo) {
         checkObjectNotEmpty(interfaceInfo);
         checkObjectNotEmpty(interfaceInfo.getAppName());
         checkObjectNotEmpty(interfaceInfo.getInterfaceClass());
 
         // 接口可以没有方法, 但是如果有方法必定要有足够且合法的信息
-        if (!CollectionUtils.isEmpty(interfaceInfo.getServicePointInfos()))
-        {
+        if (!CollectionUtils.isEmpty(interfaceInfo.getServicePointInfos())) {
             checkServicePointInfosValid(interfaceInfo.getServicePointInfos());
         }
     }
 
     /**
      * 检查对象不为null或空值
+     *
      * @param object 对象
      */
-    private void checkObjectNotEmpty(Object object)
-    {
-        if (object == null)
-        {
+    private void checkObjectNotEmpty(Object object) {
+        if (object == null) {
             throw new InterfaceInfoInValidException();
         }
 
-        if (object instanceof String)
-        {
-            if (StringUtils.isBlank((String) object))
-            {
+        if (object instanceof String) {
+            if (StringUtils.isBlank((String) object)) {
                 throw new InterfaceInfoInValidException();
             }
         }
@@ -157,18 +220,16 @@ public class SpringHttpInterfaceExecuteHandler implements ExecuteHandler {
 
     /**
      * 检查服务点信息列表是否合法
+     *
      * @param servicePointInfos 服务点信息列表
      */
-    private void checkServicePointInfosValid(List<ServicePointInfo> servicePointInfos)
-    {
-        if (CollectionUtils.isEmpty(servicePointInfos))
-        {
+    private void checkServicePointInfosValid(List<ServicePointInfo> servicePointInfos) {
+        if (CollectionUtils.isEmpty(servicePointInfos)) {
             return;
         }
 
         Class interfaceClass = null;
-        for (ServicePointInfo servicePointInfo : servicePointInfos)
-        {
+        for (ServicePointInfo servicePointInfo : servicePointInfos) {
             checkObjectNotEmpty(servicePointInfo);
             checkObjectNotEmpty(servicePointInfo.getInterfaceClass());
             checkObjectNotEmpty(servicePointInfo.getResultType());
@@ -176,24 +237,18 @@ public class SpringHttpInterfaceExecuteHandler implements ExecuteHandler {
             checkObjectNotEmpty(servicePointInfo.getServiceServerPoint());
             checkObjectNotEmpty(servicePointInfo.getArgumentType());
 
-            if (!BaseRequest.class.isAssignableFrom(servicePointInfo.getArgumentType()))
-            {
+            if (!BaseRequest.class.isAssignableFrom(servicePointInfo.getArgumentType())) {
                 throw new InterfaceInfoInValidException();
             }
 
-            if (!BaseResult.class.isAssignableFrom(servicePointInfo.getResultType()))
-            {
+            if (!BaseResult.class.isAssignableFrom(servicePointInfo.getResultType())) {
                 throw new InterfaceInfoInValidException();
             }
 
-            if (interfaceClass == null)
-            {
+            if (interfaceClass == null) {
                 interfaceClass = servicePointInfo.getInterfaceClass();
-            }
-            else
-            {
-                if (interfaceClass != servicePointInfo.getInterfaceClass())
-                {
+            } else {
+                if (interfaceClass != servicePointInfo.getInterfaceClass()) {
                     throw new InterfaceInfoInValidException();
                 }
             }
@@ -202,22 +257,55 @@ public class SpringHttpInterfaceExecuteHandler implements ExecuteHandler {
 
     /**
      * 将接口信息列表转换为客户端服务点接口信息映射
+     *
      * @param servicePointInfos 接口信息列表
      * @return 客户端服务点接口信息映射
      */
-    private Map<Method, ServicePointInfo> convertToClientPointInterfaceInfoMap(List<ServicePointInfo> servicePointInfos)
-    {
-        if (CollectionUtils.isEmpty(servicePointInfos))
-        {
+    private Map<Method, ServicePointInfo> convertToClientPointInterfaceInfoMap(List<ServicePointInfo> servicePointInfos) {
+        if (CollectionUtils.isEmpty(servicePointInfos)) {
             return null;
         }
 
         Map<Method, ServicePointInfo> methodInterfaceInfoMap = new HashMap<>();
-        for (ServicePointInfo servicePointInfo : servicePointInfos)
-        {
+        for (ServicePointInfo servicePointInfo : servicePointInfos) {
             methodInterfaceInfoMap.put(servicePointInfo.getServiceClientPoint(), servicePointInfo);
         }
 
         return Collections.unmodifiableMap(methodInterfaceInfoMap);
+    }
+
+    /**
+     * 获取调用点信息
+     *
+     * @param servicePointInfo 服务点信息
+     * @return 调用点信息
+     */
+    private String getInvokePoint(ServicePointInfo servicePointInfo) {
+        if (servicePointInfo == null) {
+            return null;
+        }
+
+        String invokePoint = invokePointMap.get(servicePointInfo);
+        if (StringUtils.isBlank(invokePoint)) {
+            invokePoint = buildInvokePoint(servicePointInfo.getInterfaceClass(), servicePointInfo.getServiceClientPoint());
+            invokePointMap.put(servicePointInfo, invokePoint);
+        }
+
+        return invokePoint;
+    }
+
+    /**
+     * 构建调用点信息
+     *
+     * @param invokeInterfaceClass 调用接口类
+     * @param invokeMethod         调用方法
+     * @return 调用点信息
+     */
+    private String buildInvokePoint(Class invokeInterfaceClass, Method invokeMethod) {
+        StringBuilder invokePointBuilder = new StringBuilder();
+        invokePointBuilder.append(invokeInterfaceClass.getName())
+                .append("::")
+                .append(invokeMethod.getName());
+        return invokePointBuilder.toString();
     }
 }
