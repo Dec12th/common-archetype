@@ -1,17 +1,18 @@
 package com.benny.archetype.common.net.execute.handler;
 
-import com.benny.archetype.common.net.domain.BaseRequest;
-import com.benny.archetype.common.net.domain.BaseResult;
-import com.benny.archetype.common.net.domain.InterfaceInfo;
-import com.benny.archetype.common.net.domain.ServicePointInfo;
+import com.alibaba.fastjson.JSON;
+import com.benny.archetype.common.net.domain.*;
 import com.benny.archetype.common.net.exception.InterfaceInfoInValidException;
 import com.benny.archetype.common.net.log.CommonNetLogger;
 import com.benny.archetype.common.net.log.LoggerTypeEnum;
 import com.benny.archetype.common.net.log.factory.CommonNetLoggerFactory;
 import com.benny.archetype.common.net.log.factory.GenericCommonNetLoggerFactory;
+import com.bestv.common.net.ex.HttpExecuteErrorException;
+import com.bestv.common.net.ex.NoInstancesException;
+import com.bestv.common.net.resolver.SpringHttpInterfaceResolver;
+import com.netflix.appinfo.InstanceInfo;
 import com.netflix.discovery.EurekaClient;
-import okhttp3.MediaType;
-import okhttp3.OkHttpClient;
+import okhttp3.*;
 import org.apache.commons.lang.StringUtils;
 import org.springframework.util.CollectionUtils;
 
@@ -115,7 +116,73 @@ public class SpringHttpInterfaceExecuteHandler implements ExecuteHandler {
 
     @Override
     public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-        return null;
+        ServicePointInfo servicePointInfo = methodInterfaceInfoMap.get(method);
+        String invokePoint = getInvokePoint(servicePointInfo);
+
+        BaseRequest request = (BaseRequest) args[0];
+        EnvContext envContext = request.getEnvContext();
+
+        if (envContext == null)
+        {
+            envContext = new EnvContext();
+            request.setEnvContext(envContext);
+        }
+
+        logger.logRequest(invokePoint, request);
+
+        List<InstanceInfo> instanceInfos = eurekaClient.getInstancesByVipAddress(interfaceInfo.getAppName(), false);
+
+        if (CollectionUtils.isEmpty(instanceInfos))
+        {
+            throw new NoInstancesException(interfaceInfo.getAppName());
+        }
+
+        int targetInstanceIndex = RANDOM.nextInt(instanceInfos.size());
+        InstanceInfo targetInstance = instanceInfos.get(targetInstanceIndex);
+
+        // 計算實際訪問地址
+        StringBuilder serverPoint = new StringBuilder();
+        serverPoint
+                .append(SpringHttpInterfaceResolver.SERVICE_POINT_PREFIX)
+                .append(targetInstance.getHostName())
+                .append(":")
+                .append(targetInstance.getPort());
+
+        StringBuilder vipServerPoint = new StringBuilder();
+        vipServerPoint
+                .append(SpringHttpInterfaceResolver.SERVICE_POINT_PREFIX)
+                .append(interfaceInfo.getAppName());
+
+        String realServerPoint = servicePointInfo.getServiceServerPoint().replace(vipServerPoint.toString(), serverPoint.toString());
+
+        RequestBody requestBody = RequestBody.create(JSON_TYPE, JSON.toJSONString(request));
+        Request httpRequest = new Request.Builder()
+                .addHeader(CONTENT_TYPE_KEY, CONTENT_TYPE)
+                .addHeader(ACCEPT_CHARSET_KEY, ACCEPT_CHARSET.name())
+                .url(realServerPoint)
+                .post(requestBody)
+                .build();
+
+        Response response = okHttpClient.newCall(httpRequest).execute();
+        if (response.code() != RESPONSE_OK_CODE)
+        {
+            logger.warn(response.toString());
+            throw new HttpExecuteErrorException(response);
+        }
+
+
+        BaseResult result = (BaseResult) JSON.parseObject(response.body().string(), servicePointInfo.getResultType());
+
+        EnvContext resultEnvContext = result.getEnvContext();
+        if (resultEnvContext == null)
+        {
+            resultEnvContext = new EnvContext();
+            result.setEnvContext(resultEnvContext);
+        }
+
+        logger.logResult(invokePoint, result);
+
+        return result;
     }
 
     /**
@@ -219,5 +286,42 @@ public class SpringHttpInterfaceExecuteHandler implements ExecuteHandler {
         }
 
         return Collections.unmodifiableMap(methodInterfaceInfoMap);
+    }
+
+    /**
+     * 获取调用点信息
+     * @param servicePointInfo 服务点信息
+     * @return 调用点信息
+     */
+    private String getInvokePoint(ServicePointInfo servicePointInfo)
+    {
+        if (servicePointInfo == null)
+        {
+            return null;
+        }
+
+        String invokePoint = invokePointMap.get(servicePointInfo);
+        if (StringUtils.isBlank(invokePoint))
+        {
+            invokePoint = buildInvokePoint(servicePointInfo.getInterfaceClass(), servicePointInfo.getServiceClientPoint());
+            invokePointMap.put(servicePointInfo, invokePoint);
+        }
+
+        return invokePoint;
+    }
+
+    /**
+     * 构建调用点信息
+     * @param invokeInterfaceClass 调用接口类
+     * @param invokeMethod         调用方法
+     * @return 调用点信息
+     */
+    private String buildInvokePoint(Class invokeInterfaceClass, Method invokeMethod)
+    {
+        StringBuilder invokePointBuilder = new StringBuilder();
+        invokePointBuilder.append(invokeInterfaceClass.getName())
+                .append("::")
+                .append(invokeMethod.getName());
+        return invokePointBuilder.toString();
     }
 }
