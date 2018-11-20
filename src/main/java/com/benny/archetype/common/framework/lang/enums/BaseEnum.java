@@ -1,11 +1,14 @@
 package com.benny.archetype.common.framework.lang.enums;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * 枚举类基类
  * @author yin.beibei
  * @date 2018/11/19 17:01
  */
-public interface BaseEnum<T extends Enum<T>> {
+public interface BaseEnum<T extends BaseEnum> {
 
     /**
      * 获得枚举对象的code
@@ -26,5 +29,17 @@ public interface BaseEnum<T extends Enum<T>> {
      *            枚举码
      * @return 枚举对象
      */
-    T getByCode(String code);
+   static <T extends BaseEnum> T getByCode(Class<? extends T> enumClass, String code) {
+       BaseEnum[] classEnums = enumClass.getEnumConstants();
+       if (classEnums != null && classEnums.length > 0)
+       {
+           for (BaseEnum baseEnum : classEnums)
+           {
+               if (baseEnum.getCode().equals(code)) {
+                   return (T)baseEnum;
+               }
+           }
+       }
+       return null;
+   }
 }

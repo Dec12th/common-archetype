@@ -2,9 +2,18 @@ package com.benny.archetype.common.framework.service.template;
 
 import com.alibaba.fastjson.JSON;
 import com.benny.archetype.common.framework.lang.enums.CommonScenario;
+import com.benny.archetype.common.framework.lang.exception.CommonErrorCode;
+import com.benny.archetype.common.framework.lang.exception.CommonException;
+import com.benny.archetype.common.framework.lang.exception.GenericException;
+import com.benny.archetype.common.framework.util.ErrorContextBuilder;
 import com.benny.archetype.common.framework.util.ScenarioHolder;
+import com.benny.archetype.common.framework.util.ServiceObjectContainer;
 import com.benny.archetype.common.net.domain.BaseResult;
+import com.benny.archetype.common.net.domain.ErrorContext;
 import com.netflix.hystrix.HystrixCommand;
+import com.netflix.hystrix.HystrixCommandGroupKey;
+import com.netflix.hystrix.HystrixCommandKey;
+import com.netflix.hystrix.HystrixCommandProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

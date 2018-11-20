@@ -1,7 +1,6 @@
 package com.benny.archetype.common.net.log;
 
 import com.benny.archetype.common.framework.lang.enums.BaseEnum;
-import org.apache.commons.lang.StringUtils;
 
 /**
  * @author yin.beibei
@@ -49,13 +48,7 @@ public enum LoggerTypeEnum implements BaseEnum<LoggerTypeEnum> {
         return description;
     }
 
-    @Override
-    public LoggerTypeEnum getByCode(String code) {
-        for (LoggerTypeEnum responseStatusEnum : values()) {
-            if (StringUtils.equals(responseStatusEnum.getCode(), code)) {
-                return responseStatusEnum;
-            }
-        }
-        return null;
+    public static void main(String[] args) {
+        System.out.println(LoggerTypeEnum.class.isEnum());
     }
 }

@@ -1,6 +1,10 @@
 package com.benny.archetype.common.framework.lang.enums;
 
 
+import com.benny.archetype.common.framework.config.CommonConfig;
+import com.benny.archetype.common.framework.config.ConfigKeyEnum;
+import com.benny.archetype.common.framework.constant.Constants;
+
 /**
  * @author yin.beibei
  * @date 2018/11/19 17:42
@@ -26,7 +30,7 @@ enum DefaultScenarioEnum implements CommonScenario<DefaultScenarioEnum> {
     /**
      * 通用场景
      */
-    COMMON(com.benny.archetype.common.framework.constant.Constants.COMMON_SCENARIO_CODE, com.benny.archetype.common.framework.constant.Constants.COMMON_SCENARIO_DESCRIPTION);
+    COMMON(Constants.COMMON_SCENARIO_CODE, Constants.COMMON_SCENARIO_DESCRIPTION);
 
     /**
      * 场景码
