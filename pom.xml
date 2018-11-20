@@ -136,4 +136,19 @@
             </plugin>
         </plugins>
     </build>
+
+    <distributionManagement>
+        <repository>
+            <id>mmaven-releases</id>
+            <url>
+                http://localhost:8081/repository/maven-releases/
+            </url>
+        </repository>
+        <snapshotRepository>
+            <id>maven-snapshots</id>
+            <url>
+                http://localhost:8081/repository/maven-snapshots/
+            </url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
