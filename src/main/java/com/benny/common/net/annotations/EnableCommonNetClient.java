@@ -1,6 +1,6 @@
 package com.benny.common.net.annotations;
 
-import com.benny.archetype.common.net.config.*;
+
 import com.benny.common.net.config.*;
 import org.springframework.context.annotation.Import;
 

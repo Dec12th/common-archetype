@@ -1,7 +1,6 @@
 package com.benny.common.net.execute.handler;
 
 import com.alibaba.fastjson.JSON;
-import com.benny.archetype.common.net.domain.*;
 import com.benny.common.net.domain.*;
 import com.benny.common.net.exception.HttpExecuteErrorException;
 import com.benny.common.net.exception.InterfaceInfoInValidException;
