@@ -79,17 +79,14 @@ public class CommonServiceExecuteTemplate implements ServiceExecuteTemplate {
             // 如果抛出了非业务异常
             if (CommonException.class.isAssignableFrom(e.getClass())) {
                 LOGGER.warn("发生了业务异常", e);
-                errorContext = ErrorContextBuilder.
-                                                          buildErrorContext(ScenarioHolder.get(), (CommonException) e);
+                errorContext = ErrorContextBuilder.buildErrorContext(ScenarioHolder.get(), (CommonException) e);
             } else if (e instanceof IllegalArgumentException) {
                 LOGGER.warn("捕获了了未包装的参数异常", e);
-                errorContext = ErrorContextBuilder.
-                                                          buildErrorContext(ScenarioHolder.get(),
+                errorContext = ErrorContextBuilder.buildErrorContext(ScenarioHolder.get(),
                                                                   new GenericException(CommonErrorCode.PARAM_ILLEGAL, e));
             } else {
                 LOGGER.error("发生了非预期的异常", e);
-                errorContext = ErrorContextBuilder.
-                                                          buildErrorContext(ScenarioHolder.get(),
+                errorContext = ErrorContextBuilder.buildErrorContext(ScenarioHolder.get(),
                                                                   new GenericException(CommonErrorCode.UNKNOWN_ERROR, e));
             }
 
