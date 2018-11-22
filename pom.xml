@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.benny.archetype</groupId>
+    <groupId>com.benny.framework</groupId>
     <artifactId>common</artifactId>
     <version>0.0.1-SNAPSHOT</version>
 
@@ -27,6 +27,12 @@
 
     <dependencies>
         <!--压缩照片-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-lang3</artifactId>
+            <version>3.5</version>
+        </dependency>
+
         <dependency>
             <groupId>net.coobird</groupId>
             <artifactId>thumbnailator</artifactId>
@@ -105,6 +111,23 @@
             <version>1.5.7</version>
             <scope>provided</scope>
         </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.alibaba/druid -->
+        <dependency>
+            <groupId>com.alibaba</groupId>
+            <artifactId>druid</artifactId>
+            <version>1.1.12</version>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>8.0.12</version>
+            <optional>true</optional>
+            <scope>provided</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -122,6 +145,12 @@
                         </goals>
                     </execution>
                 </executions>
+                <!--<configuration>-->
+                    <!--<includes>-->
+                        <!--<include>src/main/resource/META-INF/*-->
+                        <!--</include>-->
+                    <!--</includes>-->
+                <!--</configuration>-->
             </plugin>
 
             <plugin>
@@ -134,17 +163,23 @@
                 </configuration>
             </plugin>
         </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
     </build>
 
     <distributionManagement>
         <repository>
-            <id>mmaven-releases</id>
+            <id>central</id>
             <url>
-                http://localhost:8081/repository/maven-releases/
+                http://localhost:8081/repository/maven-central/
             </url>
         </repository>
         <snapshotRepository>
-            <id>maven-snapshots</id>
+            <id>snapshots</id>
             <url>
                 http://localhost:8081/repository/maven-snapshots/
             </url>
