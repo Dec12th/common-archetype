@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
  * @author:大贝
  * @date:2018年09月23日 22:46
  */
-@ConfigurationProperties(prefix = "spring.datasource")
+@ConfigurationProperties(prefix = "spring.datasource.druid")
 @Data
 public class DataSourceProperties {
     /**

@@ -31,7 +31,7 @@ import java.util.List;
  */
 @Configuration
 @EnableConfigurationProperties({DruidProperties.class,DataSourceProperties.class})
-@ConditionalOnProperty("spring.datasource.enabled")
+@ConditionalOnProperty("spring.datasource.druid.enabled")
 public class DruidConfiguration {
     private static final Logger logger = LoggerFactory.getLogger(DruidConfiguration.class);
 
