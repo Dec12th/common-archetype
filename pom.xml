@@ -145,6 +145,12 @@
                         </goals>
                     </execution>
                 </executions>
+                <!--<configuration>-->
+                    <!--<includes>-->
+                        <!--<include>src/main/resource/META-INF/*-->
+                        <!--</include>-->
+                    <!--</includes>-->
+                <!--</configuration>-->
             </plugin>
 
             <plugin>
@@ -157,6 +163,12 @@
                 </configuration>
             </plugin>
         </plugins>
+
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+            </resource>
+        </resources>
     </build>
 
     <distributionManagement>
