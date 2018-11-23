@@ -1,11 +1,13 @@
-package com.benny.framework.common.framework.lang;
+package com.benny.framework.common.framework.lang.strategy;
 
+import com.benny.framework.common.framework.lang.manager.MapManager;
 import com.benny.framework.common.framework.lang.enums.BaseEnum;
 import com.benny.framework.common.framework.lang.exception.CommonErrorCode;
 import com.benny.framework.common.framework.lang.exception.GenericException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -15,18 +17,18 @@ import java.util.Map;
  * @author yin.beibei
  * @date 2018/11/23 15:19
  */
-public abstract class AbstractStrategyManagerImpl <E extends BaseEnum, S extends Strategy<E>> implements StrategyManager<E, S>{
+public abstract class AbstractStrategyManagerImpl<E extends BaseEnum, S extends Strategy<E>> implements MapManager<E, S> {
     /** 日志记录器 */
-    private static final Logger LOGGER = LoggerFactory.getLogger(StrategyManager.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(MapManager.class);
 
     /** 策略映射 */
     private final Map<E, S> strategyMap = new HashMap<>();
 
     /**
-     * @see StrategyManager#setStrategies(Map)
+     * @see MapManager#init(Map)
      */
     @Override
-    public void setStrategies(Map<E, S> strategies)
+    public void init(Map<E, S> strategies)
     {
         LOGGER.info("初始化策略管理器: {}", getClass());
         synchronized (this)
@@ -37,19 +39,19 @@ public abstract class AbstractStrategyManagerImpl <E extends BaseEnum, S extends
     }
 
     /**
-     * @see StrategyManager#getAllStrategies()
+     * @see MapManager#getAllMap()
      */
     @Override
-    public Map<E, S> getAllStrategies()
+    public Map<E, S> getAllMap()
     {
         return Collections.unmodifiableMap(strategyMap);
     }
 
     /**
-     * @see StrategyManager#appendStrategy(Strategy)
+     * @see MapManager#append(Object)
      */
     @Override
-    public void appendStrategy(S strategy)
+    public void append(S strategy)
     {
         if (strategy == null)
         {
@@ -72,21 +74,28 @@ public abstract class AbstractStrategyManagerImpl <E extends BaseEnum, S extends
     }
 
     /**
-     * @see StrategyManager#removeStrategy(BaseEnum)
+     * @see MapManager#remove(Object)
      */
     @Override
-    public void removeStrategy(E strategyType)
+    public void remove(E strategyType)
     {
         strategyMap.remove(strategyType);
     }
 
     /**
-     * @see StrategyManager#getStrategy(BaseEnum) (Map)
+     * @see MapManager#getInstance(Object)
      */
     @Override
-    public S getStrategy(E strategyType)
+    public S getInstance(E strategyType)
     {
         return strategyMap.get(strategyType);
     }
 
+    /**
+     * @see MapManager#getAllList()
+     */
+    @Override
+    public Collection<S> getAllList() {
+        return strategyMap.values();
+    }
 }
