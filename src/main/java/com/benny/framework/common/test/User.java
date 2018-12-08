@@ -1,5 +1,6 @@
 package com.benny.framework.common.test;
 
+import com.benny.framework.common.test.annotations.CustomComponent;
 import lombok.Data;
 
 /**
@@ -11,13 +12,14 @@ import lombok.Data;
 public class User {
     private String name;
 
-    @MethodProxy
+
     public String hello() {
-        System.out.println("invoke ....");
+        System.out.println("User invoke ....");
         return "hello!";
     }
 
-    public static void main(String[] args) {
-        System.out.println(11);
-    }
+//    @MethodProxy
+//    public void methProxy() {
+//        System.out.println("methProxy invoke ....");
+//    }
 }

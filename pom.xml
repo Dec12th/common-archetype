@@ -50,7 +50,7 @@
             <artifactId>spring-boot-starter-web</artifactId>
             <version>${spring.boot.version}</version>
             <optional>true</optional>
-            <scope>provided</scope>
+<!--            <scope>runtime</scope>-->
         </dependency>
 
         <dependency>

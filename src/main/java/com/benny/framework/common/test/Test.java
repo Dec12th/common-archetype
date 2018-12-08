@@ -1,5 +1,6 @@
 package com.benny.framework.common.test;
 
+import com.benny.framework.common.test.annotations.Scan;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.context.annotation.Configuration;
 
@@ -16,11 +17,10 @@ public class Test {
         annotationConfigApplicationContext.scan(Test.class.getPackage().getName());
         annotationConfigApplicationContext.refresh();
         User user = annotationConfigApplicationContext.getBean(User.class);
-        System.out.println(user.hello());
+        UserMethodProxy userMethodProxy = annotationConfigApplicationContext.getBean(UserMethodProxy.class);
+        user.hello();
+        userMethodProxy.hello();
+        userMethodProxy.methProxy();
     }
 
-    @MethodProxy
-    public void methodProxy() {
-
-    }
 }

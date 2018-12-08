@@ -1,6 +1,7 @@
-package com.benny.framework.common.test;
+package com.benny.framework.common.test.scanner;
 
 
+import com.benny.framework.common.test.annotations.CustomComponent;
 import com.benny.framework.common.test.proxyfactory.InterfaceProxyFactoryBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
@@ -17,20 +18,13 @@ import java.util.Set;
  */
 public class Scanner extends ClassPathBeanDefinitionScanner {
 
-    boolean useDefaultFilters = true;
-
     public Scanner(BeanDefinitionRegistry registry) {
         super(registry);
-    }
-
-    public Scanner(BeanDefinitionRegistry registry,boolean useDefaultFilters ) {
-        super(registry,useDefaultFilters);
     }
 
     @Override
     public void registerDefaultFilters() {
         this.addIncludeFilter(new AnnotationTypeFilter(CustomComponent.class));
-        this.addIncludeFilter(new AnnotationTypeFilter(MethodProxy.class));
     }
 
     @Override
@@ -47,9 +41,7 @@ public class Scanner extends ClassPathBeanDefinitionScanner {
     @Override
     public boolean isCandidateComponent(AnnotatedBeanDefinition beanDefinition) {
         return super.isCandidateComponent(beanDefinition) && beanDefinition.getMetadata()
-                                                                           .hasAnnotation(CustomComponent.class.getName())
-                &&beanDefinition.getMetadata()
-                .hasAnnotatedMethods(MethodProxy.class.getName());
+                                                                           .hasAnnotation(CustomComponent.class.getName());
     }
 
 }

@@ -3,6 +3,8 @@ package com.benny.framework.common.test.proxyfactory;
 import com.benny.framework.common.test.User;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.cglib.proxy.InvocationHandler;
+import org.springframework.cglib.proxy.MethodInterceptor;
 
 
 /**
@@ -13,8 +15,20 @@ public class InterfaceProxyFactoryBean<T> implements InitializingBean, FactoryBe
 
     private String innerClassName;
 
+    private MethodInterceptor methodInterceptor;
+
+    private InvocationHandler invocationHandler;
+
     public void setInnerClassName(String innerClassName) {
         this.innerClassName = innerClassName;
+    }
+
+    public void setMethodInterceptor(MethodInterceptor methodInterceptor) {
+        this.methodInterceptor = methodInterceptor;
+    }
+
+    public void setInvocationHandler(InvocationHandler invocationHandler) {
+        this.invocationHandler = invocationHandler;
     }
 
     @Override
@@ -22,9 +36,15 @@ public class InterfaceProxyFactoryBean<T> implements InitializingBean, FactoryBe
         Class innerClass = Class.forName(innerClassName);
         if (innerClass.isInterface()) {
             DefalutInterfaceProxyFactory<T> interfaceProxyFactory = new DefalutInterfaceProxyFactory<>();
+            if (invocationHandler!=null) {
+                interfaceProxyFactory.setInvocationHandler(invocationHandler);
+            }
             return (T) interfaceProxyFactory.createInstance(innerClass);
         } else {
             DefalutClassProxyFactory<T> defalutClassProxyFactory = new DefalutClassProxyFactory<>();
+            if (methodInterceptor!=null) {
+                defalutClassProxyFactory.setMethodInterceptor(methodInterceptor);
+            }
             return (T) defalutClassProxyFactory.createInstance(innerClass);
         }
     }

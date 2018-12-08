@@ -1,4 +1,4 @@
-package com.benny.framework.common.test;
+package com.benny.framework.common.test.annotations;
 
 import java.lang.annotation.*;
 

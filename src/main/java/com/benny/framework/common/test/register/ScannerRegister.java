@@ -1,7 +1,7 @@
 package com.benny.framework.common.test.register;
 
-import com.benny.framework.common.test.Scan;
-import com.benny.framework.common.test.Scanner;
+import com.benny.framework.common.test.annotations.Scan;
+import com.benny.framework.common.test.scanner.Scanner;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.core.type.AnnotationMetadata;
 
