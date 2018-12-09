@@ -4,6 +4,7 @@ import com.benny.framework.common.test.annotations.MethodProxy;
 import com.benny.framework.common.test.handler.MethodProxyInterceptor;
 import com.benny.framework.common.test.proxyfactory.InterfaceProxyFactoryBean;
 import org.springframework.beans.factory.annotation.AnnotatedBeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.GenericBeanDefinition;
@@ -55,4 +56,18 @@ public class MethodProxyScanner extends ClassPathBeanDefinitionScanner {
                 .hasAnnotatedMethods(MethodProxy.class.getName());
         return hasAnnotatedMethods;
     }
+
+    /**
+     * 重写此方法，为了能够代理已经在spirng容器声明中的bean
+     * @param beanName
+     * @param beanDefinition
+     * @return
+     * @throws IllegalStateException
+     */
+    @Override
+    protected boolean checkCandidate(String beanName, BeanDefinition beanDefinition) throws IllegalStateException {
+        return true;
+    }
+
+
 }

@@ -8,6 +8,7 @@ import com.benny.framework.common.test.annotations.MethodProxy;
  * @author:大贝
  * @date:2018年12月08日 21:25
  */
+//@Service
 public class UserMethodProxy {
 
     @MethodProxy
